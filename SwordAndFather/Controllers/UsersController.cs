@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using SwordAndFather.Data;
 using SwordAndFather.Models;
 
 namespace SwordAndFather.Controllers
@@ -12,26 +8,37 @@ namespace SwordAndFather.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        static List<User> _users = new List<User>();
+        readonly UserRepository _userRepository;
+        readonly CreateUserRequestValidator _validator;
+
+        public UsersController()
+        {
+            _validator = new CreateUserRequestValidator();
+            _userRepository = new UserRepository();
+        }
 
         [HttpPost("register")]
-        public ActionResult<int> AddUser(CreateUserRequest createRequest)
+        public ActionResult AddUser(CreateUserRequest createRequest)
         {
-            //validation
-            if (string.IsNullOrEmpty(createRequest.Username)
-                && string.IsNullOrEmpty(createRequest.Password))
+            if (!_validator.Validate(createRequest))
             {
                 return BadRequest(new { error = "users must have a username and password" });
             }
 
-            var newUser = new User(createRequest.Username, createRequest.Password);
-
-            newUser.Id = _users.Count + 1;
-
-            _users.Add(newUser);
+            var newUser = _userRepository.AddUser(createRequest.Username, createRequest.Password);
 
             return Created($"api/users/{newUser.Id}", newUser);
+
         }
 
+    }
+
+    public class CreateUserRequestValidator
+    {
+        public bool Validate(CreateUserRequest requestToValidate)
+        {
+            return string.IsNullOrEmpty(requestToValidate.Username)
+                   || string.IsNullOrEmpty(requestToValidate.Password);
+        }
     }
 }
