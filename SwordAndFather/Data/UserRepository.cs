@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Data.SqlClient;
 using SwordAndFather.Models;
 
 namespace SwordAndFather.Data
@@ -16,6 +17,34 @@ namespace SwordAndFather.Data
             _users.Add(newUser);
 
             return newUser;
+        }
+
+        public List<User> GetAll()
+        {
+            var users = new List<User>();
+
+            var connection = new SqlConnection("Server=localhost;Database=SwordAndFather;Trusted_Connection=True;");
+            connection.Open();
+
+            var getAllUsersCommand = connection.CreateCommand();
+            getAllUsersCommand.CommandText = @"select username,password,id  
+                                               from users";
+
+            var reader = getAllUsersCommand.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var id = (int)reader["Id"];
+                var username = reader["username"].ToString();
+                var password = reader["password"].ToString();
+                var user = new User(username, password) {Id = id};
+
+                users.Add(user);
+            }
+
+            connection.Close();
+
+            return users;
         }
     }
 }

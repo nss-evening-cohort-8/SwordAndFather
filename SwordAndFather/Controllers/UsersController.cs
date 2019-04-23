@@ -31,6 +31,14 @@ namespace SwordAndFather.Controllers
 
         }
 
+        [HttpGet]
+        public ActionResult GetAllUsers()
+        {
+            var users = _userRepository.GetAll();
+
+            return Ok(users);
+        }
+
     }
 
     public class CreateUserRequestValidator
