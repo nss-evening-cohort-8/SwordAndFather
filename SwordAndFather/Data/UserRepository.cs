@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Dapper;
+using SwordAndFather.Models;
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using SwordAndFather.Models;
 
 namespace SwordAndFather.Data
 {
@@ -11,69 +12,64 @@ namespace SwordAndFather.Data
 
         public User AddUser(string username, string password)
         {
-            using (var connection = new SqlConnection(ConnectionString))
+            using (var db = new SqlConnection(ConnectionString))
             {
-                connection.Open();
-                var insertUserCommand = connection.CreateCommand();
-                insertUserCommand.CommandText = $@"Insert into users (username,password)
-                                              Output inserted.*
-                                              Values(@username,@password)";
+                var newUser = db.QueryFirstOrDefault<User>(@"
+                    Insert into users (username,password)
+                    Output inserted.*
+                    Values(@username,@password)",
+                    new { username, password });
 
-                insertUserCommand.Parameters.AddWithValue("username", username);
-                insertUserCommand.Parameters.AddWithValue("password", password);
-
-                var reader = insertUserCommand.ExecuteReader();
-
-                if (reader.Read())
+                if (newUser != null)
                 {
-                    var insertedPassword = reader["password"].ToString();
-                    var insertedUsername = reader["username"].ToString();
-                    var insertedId = (int)reader["Id"];
-
-                    var newUser = new User(insertedUsername, insertedPassword) { Id = insertedId };
-
                     return newUser;
                 }
             }
 
-            throw new Exception("No user found");
+            throw new Exception("No user created");
         }
 
-
-
-
-
-
-
-
-
-
-        public List<User> GetAll()
+        public void DeleteUser(int userId)
         {
-            var users = new List<User>();
-
-            var connection = new SqlConnection("Server=localhost;Database=SwordAndFather;Trusted_Connection=True;");
-            connection.Open();
-
-            var getAllUsersCommand = connection.CreateCommand();
-            getAllUsersCommand.CommandText = @"select username,password,id  
-                                               from users";
-
-            var reader = getAllUsersCommand.ExecuteReader();
-
-            while (reader.Read())
+            using (var db = new SqlConnection(ConnectionString))
             {
-                var id = (int)reader["Id"];
-                var username = reader["username"].ToString();
-                var password = reader["password"].ToString();
-                var user = new User(username, password) { Id = id };
+                var parameter = new {Id = userId};
 
-                users.Add(user);
+                var deleteQuery = "Delete From Users where Id = @id";
+
+                var rowsAffected = db.Execute(deleteQuery, parameter);
+
+                if (rowsAffected != 1)
+                {
+                    throw new Exception("Didn't do right");
+                }
+            }
+        }
+
+        public User UpdateUser(User userToUpdate)
+        {
+            using (var db = new SqlConnection(ConnectionString))
+            {
+                var sql = @"Update Users
+                            Set username = @username,
+                                password = @password
+                            Where id = @id";
+
+                var rowsAffected = db.Execute(sql, userToUpdate);
+
+                if (rowsAffected == 1)
+                    return userToUpdate;
             }
 
-            connection.Close();
+            throw new Exception("Could not update user");
+        }
 
-            return users;
+        public IEnumerable<User> GetAll()
+        {
+            using (var db = new SqlConnection(ConnectionString))
+            {
+                return db.Query<User>("select username, password, id from users");
+            }
         }
     }
 }
