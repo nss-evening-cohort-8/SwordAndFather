@@ -3,6 +3,7 @@ using SwordAndFather.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace SwordAndFather.Data
 {
@@ -68,7 +69,26 @@ namespace SwordAndFather.Data
         {
             using (var db = new SqlConnection(ConnectionString))
             {
-                return db.Query<User>("select username, password, id from users");
+                var users =  db.Query<User>("select username, password, id from users").ToList();
+
+                var targets = new TargetRepository().GetAll();
+
+                foreach (var user in users)
+                {
+                    var matchingTargets = targets.Where(target => target.UserId == user.Id).ToList();
+                    user.Targets = matchingTargets;
+                }
+
+                //var targets = new TargetRepository().GetAll().GroupBy(target => target.UserId);
+
+                //foreach (var user in users)
+                //{
+                //    var matchingTargets = targets.FirstOrDefault(grouping => grouping.Key == user.Id);
+
+                //    user.Targets = matchingTargets?.ToList();
+                //}
+
+                return users;
             }
         }
     }
