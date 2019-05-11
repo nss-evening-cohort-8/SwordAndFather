@@ -31,7 +31,8 @@ namespace SwordAndFather
             services.Configure<DbConfiguration>(Configuration);
             
             services.AddTransient<TargetRepository>();
-            
+            services.AddTransient<UserRepository>();
+
             //services.AddTransient<ITargetRepository>(builder => builder.GetService<StubTargetRepository>());
         }
 

@@ -8,13 +8,13 @@ namespace SwordAndFather.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        readonly UserRepository _userRepository;
+        readonly UserRepository _repository;
         readonly CreateUserRequestValidator _validator;
 
-        public UsersController()
+        public UsersController(UserRepository repository)
         {
+            _repository = repository;
             _validator = new CreateUserRequestValidator();
-            _userRepository = new UserRepository();
         }
 
         [HttpPost("register")]
@@ -25,7 +25,7 @@ namespace SwordAndFather.Controllers
                 return BadRequest(new { error = "users must have a username and password" });
             }
 
-            var newUser = _userRepository.AddUser(createRequest.Username, createRequest.Password);
+            var newUser = _repository.AddUser(createRequest.Username, createRequest.Password);
 
             return Created($"api/users/{newUser.Id}", newUser);
 
@@ -34,7 +34,7 @@ namespace SwordAndFather.Controllers
         [HttpGet]
         public ActionResult GetAllUsers()
         {
-            var users = _userRepository.GetAll();
+            var users = _repository.GetAll();
 
             return Ok(users);
         }

@@ -9,7 +9,13 @@ namespace SwordAndFather.Data
 {
     public class UserRepository
     {
+        readonly TargetRepository _targetRepository;
         const string ConnectionString = "Server=localhost;Database=SwordAndFather;Trusted_Connection=True;";
+
+        public UserRepository(TargetRepository targetRepository)
+        {
+            _targetRepository = targetRepository;
+        }
 
         public User AddUser(string username, string password)
         {
@@ -71,7 +77,7 @@ namespace SwordAndFather.Data
             {
                 var users =  db.Query<User>("select username, password, id from users").ToList();
 
-                var targets = new TargetRepository().GetAll();
+                var targets = _targetRepository.GetAll();
 
                 foreach (var user in users)
                 {
